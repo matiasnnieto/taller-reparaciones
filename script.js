@@ -3,7 +3,7 @@ const supabaseUrl = 'https://fapgbftyravkevqiqcww.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhcGdiZnR5cmF2a2V2cWlxY3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NjQxNTQsImV4cCI6MjA3NjE0MDE1NH0.eOhDjVcpRoy5e8j1bZoU_K5RCkjkjRBxPTqyxwnom-U';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// --- Verificación conexión ---
+// --- Verificar conexión ---
 async function verificarConexion() {
   const status = document.getElementById('conexion-status');
   try {
@@ -23,16 +23,14 @@ async function verificarConexion() {
 }
 verificarConexion();
 
-// --- VARIABLES GLOBALES ---
-const ES_ADMIN = false;
+// --- Variables ---
 const form = document.getElementById('repair-form');
-const tableBody = document.getElementById('repairs-body');
 const menu = document.getElementById('menu-principal');
 const formSection = document.getElementById('form-section');
 const listSection = document.getElementById('list-section');
 const clientesSection = document.getElementById('clientes-section');
 
-// --- MENÚ PRINCIPAL ---
+// --- Menú principal ---
 document.getElementById('btn-nueva').addEventListener('click', async () => {
   menu.classList.add('oculto');
   formSection.classList.remove('oculto');
@@ -62,45 +60,45 @@ document.getElementById('btn-volver-menu-3').addEventListener('click', () => {
   menu.classList.remove('oculto');
 });
 
-// --- CARGAR CLIENTES EN SELECT ---
+// --- Cargar lista de clientes en el selector ---
 async function cargarClientesSelect() {
   const select = document.getElementById('cliente-select');
-  const { data, error } = await supabase.from('clients').select('id, nombre, apellido, telefono').order('apellido', { ascending: true });
+  const { data, error } = await supabase.from('clients').select('id, nombre, apellido, telefono');
   if (error) return console.error(error);
   select.innerHTML = '<option value="">-- Nuevo cliente --</option>';
   data.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.id;
-    opt.textContent = `${c.apellido}, ${c.nombre} (${c.telefono || 'sin teléfono'})`;
-    select.appendChild(opt);
+    const option = document.createElement('option');
+    option.value = c.id;
+    option.textContent = `${c.apellido}, ${c.nombre} (${c.telefono || ''})`;
+    select.appendChild(option);
   });
 }
 
-// --- AUTOCOMPLETAR DATOS CLIENTE ---
+// --- Autocompletar datos del cliente ---
 document.getElementById('cliente-select').addEventListener('change', async e => {
   const id = e.target.value;
-  if (!id) return ['nombre','apellido','direccion','telefono'].forEach(f=>document.getElementById(f).value='');
+  if (!id) return ['nombre','apellido','direccion','telefono'].forEach(f => document.getElementById(f).value = '');
   const { data } = await supabase.from('clients').select('*').eq('id', id).single();
   if (data) {
-    document.getElementById('nombre').value = data.nombre || '';
-    document.getElementById('apellido').value = data.apellido || '';
+    document.getElementById('nombre').value = data.nombre;
+    document.getElementById('apellido').value = data.apellido;
     document.getElementById('direccion').value = data.direccion || '';
     document.getElementById('telefono').value = data.telefono || '';
   }
 });
 
-// --- GUARDAR NUEVA REPARACIÓN ---
+// --- Guardar nueva reparación ---
 form.addEventListener('submit', async e => {
   e.preventDefault();
+
   let clienteId = document.getElementById('cliente-select').value;
   if (!clienteId) {
-    const cliente = {
+    const { data: nuevo, error } = await supabase.from('clients').insert([{
       nombre: nombre.value.trim(),
       apellido: apellido.value.trim(),
       direccion: direccion.value.trim(),
       telefono: telefono.value.trim()
-    };
-    const { data: nuevo, error } = await supabase.from('clients').insert([cliente]).select().single();
+    }]).select().single();
     if (error) return alert('Error al crear cliente');
     clienteId = nuevo.id;
   }
@@ -127,17 +125,122 @@ form.addEventListener('submit', async e => {
   }
 
   const { error } = await supabase.from('repairs').insert([{ ...celular, cliente_id: clienteId, foto_url: fotoUrl }]);
-  if (error) alert('Error al guardar reparación'); else {
-    alert('Reparación registrada correctamente');
+  if (error) alert('Error al guardar reparación');
+  else {
+    alert('✅ Reparación registrada correctamente');
     form.reset();
     preview.style.display = 'none';
   }
 });
 
-// --- MOSTRAR FOTO PREVIA ---
+// --- Mostrar vista previa ---
 foto.addEventListener('change', e => {
   const file = e.target.files[0];
-  if (file) { preview.src = URL.createObjectURL(file); preview.style.display = 'block'; }
+  if (file) {
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+  }
 });
 
-// --- RESTO DE FUNCIONES (loadRepairs, loadClientes, edición, filtros) ---
+// --- Cargar reparaciones ---
+async function loadRepairs() {
+  const body = document.getElementById('repairs-body');
+  body.innerHTML = `<tr><td colspan="11">Cargando...</td></tr>`;
+
+  const { data, error } = await supabase
+    .from('repairs')
+    .select(`id, modelo, imei, color, estado, problema, precio, fecha_ingreso, fecha_entregado, foto_url, clients (nombre, apellido)`)
+    .order('id', { ascending: false });
+
+  console.log("Repairs:", data);
+  console.log("Error Repairs:", error);
+
+  if (error || !data) {
+    body.innerHTML = `<tr><td colspan="11">Error al cargar reparaciones</td></tr>`;
+    return;
+  }
+
+  if (data.length === 0) {
+    body.innerHTML = `<tr><td colspan="11">No hay reparaciones registradas</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = data.map(r => `
+    <tr>
+      <td>${r.foto_url ? `<img src="${r.foto_url}" style="width:60px;border-radius:6px;">` : '-'}</td>
+      <td>${r.clients ? `${r.clients.nombre} ${r.clients.apellido}` : '-'}</td>
+      <td>${r.modelo}</td>
+      <td>${r.imei || '-'}</td>
+      <td>${r.color || '-'}</td>
+      <td contenteditable="true" class="estado">${r.estado || ''}</td>
+      <td>${r.problema}</td>
+      <td contenteditable="true" class="precio">${r.precio || ''}</td>
+      <td>${new Date(r.fecha_ingreso).toLocaleString()}</td>
+      <td>${r.fecha_entregado ? new Date(r.fecha_entregado).toLocaleString() : '-'}</td>
+      <td><button class="guardar-btn" data-id="${r.id}">💾</button></td>
+    </tr>
+  `).join('');
+
+  attachSaveButtons();
+}
+
+// --- Guardar cambios en reparación ---
+function attachSaveButtons() {
+  document.querySelectorAll('.guardar-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const fila = btn.closest('tr');
+      const id = btn.dataset.id;
+      const estado = fila.querySelector('.estado').textContent.trim();
+      const precio = parseFloat(fila.querySelector('.precio').textContent) || null;
+      const fecha_entregado = estado.toLowerCase() === 'entregado' ? new Date().toISOString() : null;
+
+      const { error } = await supabase.from('repairs').update({ estado, precio, fecha_entregado }).eq('id', id);
+      if (error) alert('❌ Error al guardar'); else alert('✅ Cambios guardados');
+    });
+  });
+}
+
+// --- Cargar clientes ---
+async function loadClientes() {
+  const body = document.getElementById('clientes-body');
+  body.innerHTML = `<tr><td colspan="5">Cargando...</td></tr>`;
+
+  const { data, error } = await supabase.from('clients').select('*').order('id', { ascending: false });
+  console.log("Clients:", data);
+  console.log("Error Clients:", error);
+
+  if (error || !data) {
+    body.innerHTML = `<tr><td colspan="5">Error al cargar clientes</td></tr>`;
+    return;
+  }
+
+  if (data.length === 0) {
+    body.innerHTML = `<tr><td colspan="5">No hay clientes registrados</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = data.map(c => `
+    <tr data-id="${c.id}">
+      <td contenteditable="true" class="nombre">${c.nombre}</td>
+      <td contenteditable="true" class="apellido">${c.apellido}</td>
+      <td contenteditable="true" class="direccion">${c.direccion || ''}</td>
+      <td contenteditable="true" class="telefono">${c.telefono || ''}</td>
+      <td><button class="guardar-cliente">💾</button></td>
+    </tr>
+  `).join('');
+
+  document.querySelectorAll('.guardar-cliente').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const fila = btn.closest('tr');
+      const id = fila.dataset.id;
+      const actualizado = {
+        nombre: fila.querySelector('.nombre').textContent.trim(),
+        apellido: fila.querySelector('.apellido').textContent.trim(),
+        direccion: fila.querySelector('.direccion').textContent.trim(),
+        telefono: fila.querySelector('.telefono').textContent.trim()
+      };
+      const { error } = await supabase.from('clients').update(actualizado).eq('id', id);
+      if (error) alert('❌ Error'); else alert('✅ Cliente actualizado');
+    });
+  });
+}
