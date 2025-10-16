@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Reparaciones</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header>
+    <h1>📱 Taller de Reparaciones</h1>
+    <p id="conexion-status" class="conexion-msg">Verificando conexión con Supabase...</p>
+  </header>
+
+  <!-- MENÚ PRINCIPAL -->
+  <section id="menu-principal">
+    <h2>Menú Principal</h2>
+    <div class="menu-botones">
+      <button id="btn-nueva">➕ Registrar reparación</button>
+      <button id="btn-listar">📋 Ver reparaciones</button>
+      <button id="btn-clientes">📇 Gestionar clientes</button>
+    </div>
+  </section>
+
+  <!-- FORMULARIO DE INGRESO -->
+  <section id="form-section" class="oculto">
+    <h2>Nueva reparación</h2>
+    <form id="repair-form">
+      <h3>Datos del Cliente</h3>
+
+      <label for="cliente-select">Seleccionar cliente existente:</label>
+      <select id="cliente-select">
+        <option value="">-- Nuevo cliente --</option>
+      </select>
+
+      <input type="text" id="nombre" placeholder="Nombre" required />
+      <input type="text" id="apellido" placeholder="Apellido" required />
+      <input type="text" id="direccion" placeholder="Dirección" />
+      <input type="text" id="telefono" placeholder="Teléfono" />
+
+      <h3>Datos del Celular</h3>
+      <label for="fecha_ingreso">Fecha de ingreso:</label>
+      <input type="text" id="fecha_ingreso" readonly />
+
+      <input type="text" id="modelo" placeholder="Modelo" required />
+      <input type="text" id="imei" placeholder="IMEI" />
+      <input type="text" id="color" placeholder="Color" />
+      <textarea id="estado" placeholder="Estado del celular (detalles)" rows="2"></textarea>
+      <input type="text" id="problema" placeholder="Problema a reparar" required />
+      <input type="number" id="precio" placeholder="Precio reparación" />
+
+      <label for="foto">Foto del equipo:</label>
+      <input type="file" id="foto" accept="image/*" capture="environment">
+      <img id="preview" src="" alt="Vista previa" style="max-width: 100%; margin-top: 10px; display:none;">
+
+      <div class="form-botones">
+        <button type="submit">Guardar reparación</button>
+        <button type="button" id="btn-volver-menu">Volver al menú</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- LISTA DE REPARACIONES -->
+  <section id="list-section" class="oculto">
+    <h2>Reparaciones Registradas</h2>
+
+    <div class="filtros">
+      <input type="text" id="busqueda" placeholder="Buscar por cliente, modelo o IMEI..." />
+      <select id="filtro-estado">
+        <option value="">Todos los estados</option>
+        <option value="Recibido">Recibido</option>
+        <option value="En revisión">En revisión</option>
+        <option value="En reparación">En reparación</option>
+        <option value="Reparado">Reparado</option>
+        <option value="Entregado">Entregado</option>
+      </select>
+      <button id="btn-limpiar-filtros">Limpiar</button>
+    </div>
+
+    <table id="repairs-table">
+      <thead>
+        <tr>
+          <th>Foto</th>
+          <th>Cliente</th>
+          <th>Modelo</th>
+          <th>IMEI</th>
+          <th>Color</th>
+          <th>Estado</th>
+          <th>Problema</th>
+          <th>Precio</th>
+          <th>Fecha ingreso</th>
+          <th>Fecha entrega</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="repairs-body">
+        <tr><td colspan="11">Cargando...</td></tr>
+      </tbody>
+    </table>
+
+    <div class="form-botones">
+      <button id="btn-volver-menu-2">Volver al menú</button>
+    </div>
+  </section>
+
+  <!-- SECCIÓN CLIENTES -->
+  <section id="clientes-section" class="oculto">
+    <h2>Clientes registrados</h2>
+
+    <div class="filtros">
+      <input type="text" id="busqueda-clientes" placeholder="Buscar por nombre, apellido o teléfono..." />
+      <button id="btn-limpiar-clientes">Limpiar</button>
+    </div>
+
+    <table id="clientes-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>Dirección</th>
+          <th>Teléfono</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="clientes-body">
+        <tr><td colspan="5">Cargando...</td></tr>
+      </tbody>
+    </table>
+
+    <div class="form-botones">
+      <button id="btn-volver-menu-3">Volver al menú</button>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
