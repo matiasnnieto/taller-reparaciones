@@ -10,33 +10,33 @@
 <body>
   <header>
     <h1>Nisoma Celulares</h1>
-    <h3 class="subtitulo">Desarrollado por Matías Nicolás Nieto</h3>
-    <p id="conexion-status" class="conexion-msg">Verificando conexión con Supabase...</p>
+    <p class="subtitulo">Desarrollado por Matías Nicolás Nieto</p>
   </header>
 
+  <!-- Notificaciones -->
   <div id="toast" class="toast oculto"></div>
 
+  <!-- MENÚ PRINCIPAL -->
   <section id="menu-principal">
     <h2>Menú Principal</h2>
     <div class="menu-botones">
       <button id="btn-nueva">➕ Registrar reparación</button>
       <button id="btn-listar">📋 Ver reparaciones</button>
-      <button id="btn-clientes">📇 Gestionar clientes</button>
+      <button id="btn-clientes">👥 Gestionar clientes</button>
     </div>
   </section>
 
+  <!-- NUEVA REPARACIÓN -->
   <section id="form-section" class="oculto">
     <h2>Nueva reparación</h2>
     <form id="repair-form">
       <h3>Datos del Cliente</h3>
-
-      <label for="cliente-select">Seleccionar cliente existente:</label>
-      <select id="cliente-select">
-        <option value="">-- Nuevo cliente --</option>
-      </select>
-
-      <input type="text" id="nombre" placeholder="Nombre" required />
-      <input type="text" id="apellido" placeholder="Apellido" required />
+      <div class="field-wrap">
+        <input type="text" id="nombre" placeholder="Nombre" required />
+      </div>
+      <div class="field-wrap">
+        <input type="text" id="apellido" placeholder="Apellido" required />
+      </div>
       <input type="text" id="direccion" placeholder="Dirección" />
       <input type="text" id="telefono" placeholder="Teléfono particular" />
       <input type="text" id="telefono_contacto" placeholder="Teléfono de contacto" />
@@ -48,11 +48,14 @@
       <input type="text" id="modelo" placeholder="Modelo" required />
       <input type="text" id="imei" placeholder="IMEI" />
       <input type="text" id="color" placeholder="Color" />
-      <textarea id="estado" placeholder="Estado inicial del celular" rows="2"></textarea>
+      <textarea id="estado" placeholder="Detalles del equipo" rows="2"></textarea>
       <input type="text" id="problema" placeholder="Problema a reparar" required />
 
-      <input type="number" id="precio" placeholder="Precio reparación" inputmode="decimal" />
-      <input type="number" id="senia" placeholder="Seña entregada" inputmode="decimal" />
+      <div class="grid-3">
+        <input type="number" id="precio" placeholder="Precio reparación" inputmode="numeric" />
+        <input type="number" id="senia" placeholder="Seña entregada" inputmode="numeric" />
+        <input type="number" id="saldo" placeholder="Saldo a pagar" readonly />
+      </div>
 
       <label for="metodo_pago">Método de pago:</label>
       <select id="metodo_pago">
@@ -62,8 +65,6 @@
         <option value="Mercado Pago">Mercado Pago</option>
         <option value="Otros">Otros</option>
       </select>
-
-      <input type="number" id="saldo" placeholder="Saldo a pagar" readonly />
 
       <label for="foto">Foto del equipo:</label>
       <input type="file" id="foto" accept="image/*" capture="environment">
@@ -76,23 +77,34 @@
     </form>
   </section>
 
+  <!-- REPARACIONES REGISTRADAS -->
   <section id="list-section" class="oculto">
     <h2>Reparaciones Registradas</h2>
-
     <div class="filtros">
       <input type="text" id="busqueda" placeholder="Buscar por cliente, modelo o IMEI..." />
+      <select id="filtro-estado">
+        <option value="">Todos los estados</option>
+        <option value="Recibido">Recibido</option>
+        <option value="En revisión">En revisión</option>
+        <option value="En reparación">En reparación</option>
+        <option value="Listo para entregar">Listo para entregar</option>
+        <option value="Entregado">Entregado</option>
+      </select>
       <button id="btn-limpiar-filtros">Limpiar</button>
+      <button id="btn-exportar">🖨️ Exportar reparación</button>
     </div>
 
     <table id="repairs-table">
       <thead>
         <tr>
+          <th data-col="id">ID</th>
           <th data-col="foto_url">Foto</th>
           <th data-col="cliente">Cliente</th>
           <th data-col="modelo">Modelo</th>
           <th data-col="imei">IMEI</th>
           <th data-col="color">Color</th>
-          <th data-col="estado">Estado reparación</th>
+          <th data-col="estado_inicial">Detalles del equipo</th>
+          <th data-col="estado_reparacion">Estado reparación</th>
           <th data-col="problema">Problema</th>
           <th data-col="precio">Precio</th>
           <th data-col="senia">Seña</th>
@@ -104,7 +116,7 @@
         </tr>
       </thead>
       <tbody id="repairs-body">
-        <tr><td colspan="14">Cargando...</td></tr>
+        <tr><td colspan="16">Cargando...</td></tr>
       </tbody>
     </table>
 
@@ -113,14 +125,9 @@
     </div>
   </section>
 
+  <!-- CLIENTES -->
   <section id="clientes-section" class="oculto">
     <h2>Clientes Registrados</h2>
-
-    <div class="filtros">
-      <input type="text" id="busqueda-clientes" placeholder="Buscar por nombre, apellido o teléfono..." />
-      <button id="btn-limpiar-clientes">Limpiar</button>
-    </div>
-
     <table id="clientes-table">
       <thead>
         <tr>
@@ -129,23 +136,18 @@
           <th data-col="direccion">Dirección</th>
           <th data-col="telefono">Teléfono particular</th>
           <th data-col="telefono_contacto">Teléfono de contacto</th>
-          <th>Acción</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody id="clientes-body">
         <tr><td colspan="6">Cargando...</td></tr>
       </tbody>
     </table>
-
     <div class="form-botones">
       <button id="btn-volver-menu-3">Volver al menú</button>
     </div>
   </section>
 
-  <script>
-    window.ENV_SUPABASE_URL = "https://fapgbftyravkevqiqcww.supabase.co";
-    window.ENV_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhcGdiZnR5cmF2a2V2cWlxY3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NjQxNTQsImV4cCI6MjA3NjE0MDE1NH0.eOhDjVcpRoy5e8j1bZoU_K5RCkjkjRBxPTqyxwnom-U";
-  </script>
   <script src="script.js"></script>
 </body>
 </html>
