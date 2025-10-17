@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestión de Reparaciones</title>
+  <title>Nisoma Celulares</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header>
-    <h1>📱 Taller de Reparaciones</h1>
+    <h1>Nisoma Celulares</h1>
+    <h3 class="subtitulo">Desarrollado por Matías Nicolás Nieto</h3>
     <p id="conexion-status" class="conexion-msg">Verificando conexión con Supabase...</p>
   </header>
 
-  <!-- MENÚ PRINCIPAL -->
+  <div id="toast" class="toast oculto"></div>
+
   <section id="menu-principal">
     <h2>Menú Principal</h2>
     <div class="menu-botones">
@@ -23,7 +25,6 @@
     </div>
   </section>
 
-  <!-- FORMULARIO DE INGRESO -->
   <section id="form-section" class="oculto">
     <h2>Nueva reparación</h2>
     <form id="repair-form">
@@ -37,7 +38,8 @@
       <input type="text" id="nombre" placeholder="Nombre" required />
       <input type="text" id="apellido" placeholder="Apellido" required />
       <input type="text" id="direccion" placeholder="Dirección" />
-      <input type="text" id="telefono" placeholder="Teléfono" />
+      <input type="text" id="telefono" placeholder="Teléfono particular" />
+      <input type="text" id="telefono_contacto" placeholder="Teléfono de contacto" />
 
       <h3>Datos del Celular</h3>
       <label for="fecha_ingreso">Fecha de ingreso:</label>
@@ -46,9 +48,22 @@
       <input type="text" id="modelo" placeholder="Modelo" required />
       <input type="text" id="imei" placeholder="IMEI" />
       <input type="text" id="color" placeholder="Color" />
-      <textarea id="estado" placeholder="Estado del celular (detalles)" rows="2"></textarea>
+      <textarea id="estado" placeholder="Estado inicial del celular" rows="2"></textarea>
       <input type="text" id="problema" placeholder="Problema a reparar" required />
-      <input type="number" id="precio" placeholder="Precio reparación" />
+
+      <input type="number" id="precio" placeholder="Precio reparación" inputmode="decimal" />
+      <input type="number" id="senia" placeholder="Seña entregada" inputmode="decimal" />
+
+      <label for="metodo_pago">Método de pago:</label>
+      <select id="metodo_pago">
+        <option value="Efectivo">Efectivo</option>
+        <option value="Tarjeta débito">Tarjeta débito</option>
+        <option value="Tarjeta crédito">Tarjeta crédito</option>
+        <option value="Mercado Pago">Mercado Pago</option>
+        <option value="Otros">Otros</option>
+      </select>
+
+      <input type="number" id="saldo" placeholder="Saldo a pagar" readonly />
 
       <label for="foto">Foto del equipo:</label>
       <input type="file" id="foto" accept="image/*" capture="environment">
@@ -61,7 +76,6 @@
     </form>
   </section>
 
-  <!-- LISTA DE REPARACIONES -->
   <section id="list-section" class="oculto">
     <h2>Reparaciones Registradas</h2>
 
@@ -73,21 +87,24 @@
     <table id="repairs-table">
       <thead>
         <tr>
-          <th>Foto</th>
-          <th>Cliente</th>
-          <th>Modelo</th>
-          <th>IMEI</th>
-          <th>Color</th>
-          <th>Estado</th>
-          <th>Problema</th>
-          <th>Precio</th>
-          <th>Fecha ingreso</th>
-          <th>Fecha entrega</th>
+          <th data-col="foto_url">Foto</th>
+          <th data-col="cliente">Cliente</th>
+          <th data-col="modelo">Modelo</th>
+          <th data-col="imei">IMEI</th>
+          <th data-col="color">Color</th>
+          <th data-col="estado">Estado reparación</th>
+          <th data-col="problema">Problema</th>
+          <th data-col="precio">Precio</th>
+          <th data-col="senia">Seña</th>
+          <th data-col="saldo">Saldo</th>
+          <th data-col="comentario">Comentario</th>
+          <th data-col="fecha_ingreso">Fecha ingreso</th>
+          <th data-col="fecha_entregado">Fecha entrega</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody id="repairs-body">
-        <tr><td colspan="11">Cargando...</td></tr>
+        <tr><td colspan="14">Cargando...</td></tr>
       </tbody>
     </table>
 
@@ -96,9 +113,8 @@
     </div>
   </section>
 
-  <!-- SECCIÓN CLIENTES -->
   <section id="clientes-section" class="oculto">
-    <h2>Clientes registrados</h2>
+    <h2>Clientes Registrados</h2>
 
     <div class="filtros">
       <input type="text" id="busqueda-clientes" placeholder="Buscar por nombre, apellido o teléfono..." />
@@ -108,15 +124,16 @@
     <table id="clientes-table">
       <thead>
         <tr>
-          <th>Nombre</th>
-          <th>Apellido</th>
-          <th>Dirección</th>
-          <th>Teléfono</th>
+          <th data-col="nombre">Nombre</th>
+          <th data-col="apellido">Apellido</th>
+          <th data-col="direccion">Dirección</th>
+          <th data-col="telefono">Teléfono particular</th>
+          <th data-col="telefono_contacto">Teléfono de contacto</th>
           <th>Acción</th>
         </tr>
       </thead>
       <tbody id="clientes-body">
-        <tr><td colspan="5">Cargando...</td></tr>
+        <tr><td colspan="6">Cargando...</td></tr>
       </tbody>
     </table>
 
@@ -125,6 +142,10 @@
     </div>
   </section>
 
+  <script>
+    window.ENV_SUPABASE_URL = "https://fapgbftyravkevqiqcww.supabase.co";
+    window.ENV_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhcGdiZnR5cmF2a2V2cWlxY3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NjQxNTQsImV4cCI6MjA3NjE0MDE1NH0.eOhDjVcpRoy5e8j1bZoU_K5RCkjkjRBxPTqyxwnom-U";
+  </script>
   <script src="script.js"></script>
 </body>
 </html>
